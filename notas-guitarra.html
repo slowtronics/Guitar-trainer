@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notas de Guitarra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1b1410; --bg2:#241a14; --wood:#3a2818; --string:#c9862a;
+  --cream:#f2e9dc; --dim:#b8a890; --ok:#7fae5f; --bad:#c05a42;
+  --card:#2a1f17;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{
+  height:100%;margin:0;background:var(--bg);color:var(--cream);
+  font-family:'Inter',sans-serif;display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+.wrap{max-width:480px;margin:0 auto;width:100%;padding:20px 18px;flex:1;display:flex;flex-direction:column;min-height:100%}
+h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:6px 0 2px;letter-spacing:.3px}
+.sub{color:var(--dim);font-size:14px;margin:0 0 20px;line-height:1.4}
+.card{background:var(--card);border:1px solid #40301f;border-radius:14px;padding:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px}
+.chip{padding:9px 14px;border-radius:999px;border:1px solid #52402a;background:#332415;color:var(--dim);
+  font-size:15px;font-weight:600;cursor:pointer;user-select:none;transition:.15s}
+.chip.on{background:var(--string);border-color:var(--string);color:#211406}
+label.field{display:block;font-size:13px;color:var(--dim);margin-bottom:8px}
+button.main{width:100%;padding:16px;border-radius:12px;border:none;background:var(--string);
+  color:#211406;font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:.4px;cursor:pointer;margin-top:8px}
+button.main:disabled{opacity:.4}
+button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a;background:transparent;
+  color:var(--dim);font-size:14px;margin-top:10px;cursor:pointer}
+#setup,#game,#done{display:none}
+#setup.show,#game.show,#done.show{display:flex;flex-direction:column;flex:1}
+.topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim);margin-bottom:14px}
+.topbar b{color:var(--cream);font-weight:600}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;position:relative}
+.cuerda{font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:2px;color:var(--string);font-weight:600;text-transform:uppercase}
+.nota{font-family:'Oswald',sans-serif;font-size:110px;font-weight:700;line-height:1;margin:4px 0}
+.hint{font-size:13px;color:var(--dim)}
+.timebar{height:10px;border-radius:6px;background:#332415;overflow:hidden;margin:22px 0 6px}
+.timebar > div{height:100%;background:var(--string);width:100%;transition:width .18s linear,background .3s}
+.mic{display:flex;align-items:center;gap:8px;justify-content:center;font-size:13px;color:var(--dim);margin-top:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:#52402a;transition:.15s}
+.dot.live{background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',sans-serif;font-size:34px;font-weight:700;border-radius:14px;opacity:0;pointer-events:none;transition:opacity .12s}
+.flash.ok{background:rgba(127,174,95,.92);color:#12220b}
+.flash.bad{background:rgba(192,90,66,.92);color:#2a0d06}
+.flash.show{opacity:1}
+.stat{text-align:center}
+.stat b{display:block;font-family:'Oswald',sans-serif;font-size:20px}
+#done h2{font-family:'Oswald',sans-serif;font-size:30px;margin-bottom:4px}
+#done p{color:var(--dim);font-size:14px}
+#err{color:var(--bad);font-size:13px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="setup" class="show">
+    <h1>Notas de guitarra</h1>
+    <p class="sub">Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos subís de nivel y sumo una nota nueva.</p>
+    <div class="card">
+      <label class="field">Empezar el nivel 1 con estas notas:</label>
+      <div class="chips" id="chips"></div>
+      <button class="main" id="startBtn">Empezar</button>
+      <div id="err"></div>
+    </div>
+  </div>
+
+  <div id="game">
+    <div class="topbar">
+      <span>Nivel <b id="lvl">1</b></span>
+      <span><b id="streak">0</b>/10 para subir</span>
+      <span>Aciertos: <b id="score">0</b></span>
+    </div>
+    <div class="stage">
+      <div class="flash" id="flash"></div>
+      <div class="cuerda" id="cuerdaLbl">CUERDA 1</div>
+      <div class="nota" id="notaLbl">C</div>
+      <div class="hint" id="freqHint">&nbsp;</div>
+    </div>
+    <div class="timebar"><div id="timeFill"></div></div>
+    <div class="mic"><span class="dot" id="dot"></span><span id="micTxt">Escuchando…</span></div>
+  </div>
+
+  <div id="done">
+    <div class="stage">
+      <h2>¡Se acabó el tiempo!</h2>
+      <p>Llegaste al nivel <b id="finalLvl"></b> con <b id="finalScore"></b> aciertos.</p>
+      <button class="main" id="retryBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const ALL_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTE_ES = {'C':'DO','C#':'DO#','D':'RE','D#':'RE#','E':'MI','F':'FA','F#':'FA#','G':'SOL','G#':'SOL#','A':'LA','A#':'LA#','B':'SI'};
+// cuerda -> [freqMin, freqMax] abierta a traste 12
+const STRING_RANGE = {
+  1:[329.63,659.25], 2:[246.94,493.88], 3:[196.00,392.00],
+  4:[146.83,293.66], 5:[110.00,220.00], 6:[82.41,164.81]
+};
+
+// ---- Setup screen ----
+const chipsEl = document.getElementById('chips');
+let selected = new Set(['C']);
+ALL_NOTES.forEach(n=>{
+  const c = document.createElement('div');
+  c.className = 'chip' + (selected.has(n)?' on':'');
+  c.textContent = NOTE_ES[n];
+  c.onclick = ()=>{ selected.has(n) ? selected.delete(n) : selected.add(n); c.classList.toggle('on'); };
+  chipsEl.appendChild(c);
+});
+
+let pool = [];       // notas activas en el nivel actual
+let remaining = [];  // notas por incorporar en próximos niveles
+let level = 1, score = 0, streakToNext = 0;
+let audioCtx, analyser, micStream, rafId;
+let roundActive = false, timeLeft = 0, timeLimit = 30, timerId = null;
+let currentCuerda = 1, currentNota = 'C';
+let lastMatchAt = 0;
+
+document.getElementById('startBtn').onclick = async () => {
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+  if (selected.size === 0) { err.textContent = 'Elegí al menos una nota para arrancar.'; err.style.display='block'; return; }
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
+  } catch(e) {
+    err.textContent = 'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.';
+    err.style.display = 'block';
+    return;
+  }
+  pool = ALL_NOTES.filter(n=>selected.has(n));
+  remaining = ALL_NOTES.filter(n=>!selected.has(n));
+  level = 1; score = 0; streakToNext = 0;
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = audioCtx.createMediaStreamSource(micStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  src.connect(analyser);
+  document.getElementById('setup').classList.remove('show');
+  document.getElementById('game').classList.add('show');
+  updateTopbar();
+  nextRound();
+  loop();
+};
+
+document.getElementById('retryBtn').onclick = ()=>{
+  document.getElementById('done').classList.remove('show');
+  document.getElementById('setup').classList.add('show');
+};
+
+function updateTopbar(){
+  document.getElementById('lvl').textContent = level;
+  document.getElementById('score').textContent = score;
+  document.getElementById('streak').textContent = streakToNext;
+}
+
+function timeLimitForLevel(l){
+  return Math.max(8, 30 - (l-1)*2);
+}
+
+function nextRound(){
+  currentCuerda = 1 + Math.floor(Math.random()*6);
+  currentNota = pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('cuerdaLbl').textContent = 'CUERDA ' + currentCuerda;
+  document.getElementById('notaLbl').textContent = NOTE_ES[currentNota];
+  document.getElementById('freqHint').textContent = '';
+  timeLimit = timeLimitForLevel(level);
+  timeLeft = timeLimit;
+  roundActive = true;
+  lastMatchAt = 0;
+  clearInterval(timerId);
+  timerId = setInterval(tick, 100);
+  renderBar();
+}
+
+function tick(){
+  timeLeft -= 0.1;
+  renderBar();
+  if (timeLeft <= 0){
+    clearInterval(timerId);
+    roundActive = false;
+    flash('bad','¡Se pasó el tiempo!');
+    setTimeout(()=>{
+      if (streakToNext > 0) streakToNext = Math.max(0, streakToNext-1);
+      updateTopbar();
+      nextRound();
+    }, 700);
+  }
+}
+
+function renderBar(){
+  const pct = Math.max(0, (timeLeft/timeLimit)*100);
+  const fill = document.getElementById('timeFill');
+  fill.style.width = pct+'%';
+  fill.style.background = pct<25 ? 'var(--bad)' : (pct<55 ? '#d9a441' : 'var(--string)');
+}
+
+function flash(kind, text){
+  const f = document.getElementById('flash');
+  f.textContent = text;
+  f.className = 'flash show ' + kind;
+  setTimeout(()=> f.classList.remove('show'), 550);
+}
+
+function onCorrect(){
+  if (!roundActive) return;
+  const now = performance.now();
+  if (now - lastMatchAt < 400) return; // evita doble conteo
+  lastMatchAt = now;
+  roundActive = false;
+  clearInterval(timerId);
+  score++;
+  streakToNext++;
+  flash('ok', '¡Bien!');
+  if (streakToNext >= 10){
+    streakToNext = 0;
+    level++;
+    if (remaining.length){
+      pool.push(remaining.shift());
+    }
+  }
+  updateTopbar();
+  setTimeout(nextRound, 550);
+}
+
+// ---- Detección de pitch (autocorrelación) ----
+function autoCorrelate(buf, sampleRate){
+  const SIZE = buf.length;
+  let rms = 0;
+  for (let i=0;i<SIZE;i++){ rms += buf[i]*buf[i]; }
+  rms = Math.sqrt(rms/SIZE);
+  if (rms < 0.01) return -1;
+
+  let r1=0, r2=SIZE-1, thresh=0.2;
+  for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i])<thresh){ r1=i; break; } }
+  for (let i=1;i<SIZE/2;i++){ if (Math.abs(buf[SIZE-i])<thresh){ r2=SIZE-i; break; } }
+  const trimmed = buf.slice(r1,r2);
+  const n = trimmed.length;
+  const c = new Array(n).fill(0);
+  for (let lag=0; lag<n; lag++){
+    let sum=0;
+    for (let i=0;i<n-lag;i++){ sum += trimmed[i]*trimmed[i+lag]; }
+    c[lag]=sum;
+  }
+  let d=0; while (c[d]>c[d+1]) d++;
+  let maxval=-1, maxpos=-1;
+  for (let i=d;i<n;i++){ if (c[i]>maxval){ maxval=c[i]; maxpos=i; } }
+  let T0=maxpos;
+  if (T0<=0) return -1;
+  const x1=c[T0-1]||c[T0], x2=c[T0], x3=c[T0+1]||c[T0];
+  const a=(x1+x3-2*x2)/2, b=(x3-x1)/2;
+  if (a) T0 = T0 - b/(2*a);
+  return sampleRate/T0;
+}
+
+function freqToNote(freq){
+  const midi = Math.round(69 + 12*Math.log2(freq/440));
+  const name = ALL_NOTES[((midi%12)+12)%12];
+  return name;
+}
+
+const buf = new Float32Array(2048);
+function loop(){
+  rafId = requestAnimationFrame(loop);
+  if (!analyser) return;
+  analyser.getFloatTimeDomainData(buf);
+  const freq = autoCorrelate(buf, audioCtx.sampleRate);
+  const dot = document.getElementById('dot');
+  if (freq > 0){
+    dot.classList.add('live');
+    if (!roundActive) return;
+    const range = STRING_RANGE[currentCuerda];
+    const noteName = freqToNote(freq);
+    document.getElementById('freqHint').textContent = Math.round(freq)+' Hz · '+NOTE_ES[noteName];
+    const inRange = freq >= range[0]*0.94 && freq <= range[1]*1.06;
+    if (noteName === currentNota && inRange){
+      onCorrect();
+    }
+  } else {
+    dot.classList.remove('live');
+  }
+}
+</script>
+</body>
+</html>
