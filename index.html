@@ -38,8 +38,13 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
   color:var(--dim);font-size:14px;margin-top:10px;cursor:pointer}
 #setup,#game,#done{display:none}
 #setup.show,#game.show,#done.show{display:flex;flex-direction:column;flex:1}
-.topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim);margin-bottom:14px}
+.topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim);margin-bottom:10px;gap:8px}
 .topbar b{color:var(--cream);font-weight:600}
+.progressRow{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px}
+.progressRow .plabel{font-size:11px;color:var(--dim);margin-right:6px;letter-spacing:.3px}
+.pdot{width:14px;height:14px;border-radius:50%;background:#332415;border:1.5px solid #52402a;transition:.2s}
+.pdot.on{background:var(--ok);border-color:var(--ok)}
+.progressRow.reset .pdot{background:var(--bad)!important;border-color:var(--bad)!important}
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;position:relative}
 .cuerda{font-family:'Oswald',sans-serif;font-size:34px;letter-spacing:1px;color:var(--string);font-weight:700;text-transform:uppercase}
 .strings{width:100%;max-width:260px;margin:2px 0 10px}
@@ -60,6 +65,15 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 #done h2{font-family:'Oswald',sans-serif;font-size:30px;margin-bottom:4px}
 #done p{color:var(--dim);font-size:14px}
 #err{color:var(--bad);font-size:13px;margin-top:10px;display:none}
+
+.levelUp{position:fixed;inset:0;background:rgba(27,20,16,.94);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;z-index:50;opacity:0;pointer-events:none;transition:opacity .25s}
+.levelUp.show{opacity:1}
+.levelUp .lvNum{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;color:var(--string);
+  transform:scale(.4);opacity:0;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+.levelUp.show .lvNum{transform:scale(1);opacity:1}
+.levelUp .lvSub{font-size:16px;color:var(--cream);opacity:0;transform:translateY(10px);transition:opacity .4s .15s,transform .4s .15s}
+.levelUp.show .lvSub{opacity:1;transform:translateY(0)}
 </style>
 </head>
 <body>
@@ -79,8 +93,11 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
   <div id="game">
     <div class="topbar">
       <span>Nivel <b id="lvl">1</b></span>
-      <span><b id="streak">0</b>/10 para subir</span>
+      <span>Notas en juego: <b id="poolCount">1</b></span>
       <span>Aciertos: <b id="score">0</b></span>
+    </div>
+    <div class="progressRow" id="progressRow">
+      <span class="plabel">10 SEGUIDAS SIN FALLAR</span>
     </div>
     <div class="stage">
       <div class="flash" id="flash"></div>
@@ -91,6 +108,11 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
     </div>
     <div class="timebar"><div id="timeFill"></div></div>
     <div class="mic"><span class="dot" id="dot"></span><span id="micTxt">Escuchando…</span></div>
+  </div>
+
+  <div class="levelUp" id="levelUp">
+    <div class="lvNum" id="lvNum">NIVEL 2</div>
+    <div class="lvSub" id="lvSub">Nota agregada: RE</div>
   </div>
 
   <div id="done">
@@ -171,7 +193,32 @@ document.getElementById('retryBtn').onclick = ()=>{
 function updateTopbar(){
   document.getElementById('lvl').textContent = level;
   document.getElementById('score').textContent = score;
-  document.getElementById('streak').textContent = streakToNext;
+  document.getElementById('poolCount').textContent = pool.length;
+}
+
+function renderProgress(){
+  const row = document.getElementById('progressRow');
+  let dotsHtml = '<span class="plabel">10 SEGUIDAS SIN FALLAR</span>';
+  for (let i=0;i<10;i++){
+    dotsHtml += `<span class="pdot${i<streakToNext?' on':''}"></span>`;
+  }
+  row.innerHTML = dotsHtml;
+}
+
+function pulseReset(){
+  const row = document.getElementById('progressRow');
+  row.classList.add('reset');
+  setTimeout(()=> row.classList.remove('reset'), 260);
+}
+
+function showLevelUp(lvl, addedNote){
+  const el = document.getElementById('levelUp');
+  document.getElementById('lvNum').textContent = 'NIVEL ' + lvl;
+  document.getElementById('lvSub').textContent = addedNote
+    ? ('Nota agregada: ' + NOTE_ES[addedNote])
+    : 'Ya tenés todas las notas activas';
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 1600);
 }
 
 function timeLimitForLevel(l){
@@ -207,6 +254,7 @@ function nextRound(){
   document.getElementById('notaLbl').textContent = NOTE_ES[currentNota];
   document.getElementById('freqHint').textContent = '';
   renderStrings(currentCuerda);
+  renderProgress();
   timeLimit = timeLimitForLevel(level);
   timeLeft = timeLimit;
   roundActive = true;
@@ -225,7 +273,7 @@ function tick(){
     roundActive = false;
     flash('bad','¡Se pasó el tiempo!');
     setTimeout(()=>{
-      if (streakToNext > 0) streakToNext = Math.max(0, streakToNext-1);
+      if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
       updateTopbar();
       nextRound();
     }, 700);
@@ -256,15 +304,20 @@ function onCorrect(){
   score++;
   streakToNext++;
   flash('ok', '¡Bien!');
+  renderProgress();
   if (streakToNext >= 10){
     streakToNext = 0;
     level++;
-    if (remaining.length){
-      pool.push(remaining.shift());
-    }
+    let added = null;
+    if (remaining.length){ added = remaining.shift(); pool.push(added); }
+    updateTopbar();
+    renderProgress();
+    showLevelUp(level, added);
+    setTimeout(nextRound, 1700);
+  } else {
+    updateTopbar();
+    setTimeout(nextRound, 550);
   }
-  updateTopbar();
-  setTimeout(nextRound, 550);
 }
 
 // ---- Detección de pitch (autocorrelación) ----
@@ -325,8 +378,10 @@ function loop(){
       else if (now - wrongNoteSince > 150 && now - lastWrongAt > 900){
         lastWrongAt = now;
         score = Math.max(0, score - 1);
-        flash('bad', NOTE_ES[noteName] + ' no es');
+        if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
+        renderProgress();
         updateTopbar();
+        flash('bad', NOTE_ES[noteName] + ' no es');
       }
     }
   } else {
