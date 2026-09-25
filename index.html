@@ -244,6 +244,7 @@ document.getElementById('startBtn').onclick = async () => {
   src.connect(analyser);
   document.getElementById('setup').classList.remove('show');
   document.getElementById('game').classList.add('show');
+  document.getElementById('flagBtn').style.display = 'none';
   updateTopbar();
   nextRound();
   loop();
@@ -252,6 +253,7 @@ document.getElementById('startBtn').onclick = async () => {
 document.getElementById('retryBtn').onclick = ()=>{
   document.getElementById('done').classList.remove('show');
   document.getElementById('setup').classList.add('show');
+  document.getElementById('flagBtn').style.display = 'flex';
 };
 
 function updateTopbar(){
