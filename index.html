@@ -74,16 +74,20 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 .levelUp.show .lvNum{transform:scale(1);opacity:1}
 .levelUp .lvSub{font-size:16px;color:var(--cream);opacity:0;transform:translateY(10px);transition:opacity .4s .15s,transform .4s .15s}
 .levelUp.show .lvSub{opacity:1;transform:translateY(0)}
+.langToggle{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:60;
+  background:var(--card);border:1px solid #52402a;border-radius:999px;width:42px;height:42px;
+  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 </style>
 </head>
 <body>
+<button class="langToggle" id="flagBtn" title="Switch language">🇬🇧</button>
 <div class="wrap">
 
   <div id="setup" class="show">
-    <h1>Notas de guitarra</h1>
-    <p class="sub">Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos subís de nivel y sumo una nota nueva.</p>
+    <h1 id="appTitle">Notas de guitarra</h1>
+    <p class="sub" id="appSub">Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos subís de nivel y sumo una nota nueva.</p>
     <div class="card">
-      <label class="field">Empezar el nivel 1 con estas notas:</label>
+      <label class="field" id="chooseLabel">Empezar el nivel 1 con estas notas:</label>
       <div class="chips" id="chips"></div>
       <button class="main" id="startBtn">Empezar</button>
       <div id="err"></div>
@@ -92,12 +96,12 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 
   <div id="game">
     <div class="topbar">
-      <span>Nivel <b id="lvl">1</b></span>
-      <span>Notas en juego: <b id="poolCount">1</b></span>
-      <span>Aciertos: <b id="score">0</b></span>
+      <span><span id="lblLevel">Nivel</span> <b id="lvl">1</b></span>
+      <span><span id="lblPool">Notas en juego</span>: <b id="poolCount">1</b></span>
+      <span><span id="lblScore">Aciertos</span>: <b id="score">0</b></span>
     </div>
     <div class="progressRow" id="progressRow">
-      <span class="plabel">10 SEGUIDAS SIN FALLAR</span>
+      <span class="plabel" id="plabel">10 SEGUIDAS SIN FALLAR</span>
     </div>
     <div class="stage">
       <div class="flash" id="flash"></div>
@@ -117,8 +121,8 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 
   <div id="done">
     <div class="stage">
-      <h2>¡Se acabó el tiempo!</h2>
-      <p>Llegaste al nivel <b id="finalLvl"></b> con <b id="finalScore"></b> aciertos.</p>
+      <h2 id="doneTitle">¡Se acabó el tiempo!</h2>
+      <p id="doneP">Llegaste al nivel <b id="finalLvl"></b> con <b id="finalScore"></b> aciertos.</p>
       <button class="main" id="retryBtn">Jugar de nuevo</button>
     </div>
   </div>
@@ -134,16 +138,76 @@ const STRING_RANGE = {
   4:[146.83,293.66], 5:[110.00,220.00], 6:[82.41,164.81]
 };
 
+let lang = 'es';
+const STR = {
+  es: {
+    title:'Notas de guitarra',
+    subtitle:'Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos seguidos subís de nivel y sumo una nota nueva.',
+    chooseLabel:'Empezar el nivel 1 con estas notas:',
+    startBtn:'Empezar', retryBtn:'Jugar de nuevo',
+    errNoNotes:'Elegí al menos una nota para arrancar.',
+    errInsecure:'Este archivo abierto así no puede usar el micrófono (el navegador solo lo permite en páginas HTTPS). Subilo a un hosting o usá la versión publicada en claude.ai.',
+    errNoMic:'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.',
+    lblLevel:'Nivel', lblPool:'Notas en juego', lblScore:'Aciertos',
+    progressLabel:'10 SEGUIDAS SIN FALLAR', cuerdaWord:'CUERDA', micListening:'Escuchando…',
+    flashGood:'¡Bien!', flashTimeUp:'¡Se pasó el tiempo!', wrongSuffix:' no es',
+    levelWord:'NIVEL', addedNote:'Nota agregada: ', allNotesActive:'Ya tenés todas las notas activas',
+    doneTitle:'¡Se acabó el tiempo!', doneText:(l,s)=>`Llegaste al nivel ${l} con ${s} aciertos.`
+  },
+  en: {
+    title:'Guitar Notes',
+    subtitle:"I'll call out a string and a note. Play it and I'll listen through the mic. Get 10 correct in a row to level up and I'll add a new note.",
+    chooseLabel:'Start level 1 with these notes:',
+    startBtn:'Start', retryBtn:'Play again',
+    errNoNotes:'Pick at least one note to start.',
+    errInsecure:"A file opened this way can't use the microphone (browsers only allow it on HTTPS pages). Upload it somewhere, or use the published claude.ai version.",
+    errNoMic:'I need microphone access to listen to you. Check your browser permissions.',
+    lblLevel:'Level', lblPool:'Notes in play', lblScore:'Correct',
+    progressLabel:'10 IN A ROW, NO MISSES', cuerdaWord:'STRING', micListening:'Listening…',
+    flashGood:'Nice!', flashTimeUp:"Time's up!", wrongSuffix:" isn't it",
+    levelWord:'LEVEL', addedNote:'Note added: ', allNotesActive:'All notes are already active',
+    doneTitle:"Time's up!", doneText:(l,s)=>`You reached level ${l} with ${s} correct notes.`
+  }
+};
+function t(){ return STR[lang]; }
+function noteLabel(n){ return lang==='es' ? NOTE_ES[n] : n; }
+
 // ---- Setup screen ----
 const chipsEl = document.getElementById('chips');
 let selected = new Set(['C']);
-ALL_NOTES.forEach(n=>{
-  const c = document.createElement('div');
-  c.className = 'chip' + (selected.has(n)?' on':'');
-  c.textContent = NOTE_ES[n];
-  c.onclick = ()=>{ selected.has(n) ? selected.delete(n) : selected.add(n); c.classList.toggle('on'); };
-  chipsEl.appendChild(c);
-});
+function renderChips(){
+  chipsEl.innerHTML = '';
+  ALL_NOTES.forEach(n=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (selected.has(n)?' on':'');
+    c.textContent = noteLabel(n);
+    c.onclick = ()=>{ selected.has(n) ? selected.delete(n) : selected.add(n); c.classList.toggle('on'); };
+    chipsEl.appendChild(c);
+  });
+}
+renderChips();
+
+function applyLanguage(){
+  const s = t();
+  document.getElementById('appTitle').textContent = s.title;
+  document.getElementById('appSub').textContent = s.subtitle;
+  document.getElementById('chooseLabel').textContent = s.chooseLabel;
+  document.getElementById('startBtn').textContent = s.startBtn;
+  document.getElementById('retryBtn').textContent = s.retryBtn;
+  document.getElementById('lblLevel').textContent = s.lblLevel;
+  document.getElementById('lblPool').textContent = s.lblPool;
+  document.getElementById('lblScore').textContent = s.lblScore;
+  document.getElementById('plabel').textContent = s.progressLabel;
+  document.getElementById('micTxt').textContent = s.micListening;
+  document.getElementById('doneTitle').textContent = s.doneTitle;
+  document.getElementById('flagBtn').textContent = lang==='es' ? '🇬🇧' : '🇪🇸';
+  renderChips();
+  if (document.getElementById('game').classList.contains('show')){
+    document.getElementById('cuerdaLbl').textContent = s.cuerdaWord + ' ' + currentCuerda;
+    document.getElementById('notaLbl').textContent = noteLabel(currentNota);
+  }
+}
+document.getElementById('flagBtn').onclick = ()=>{ lang = lang==='es' ? 'en' : 'es'; applyLanguage(); };
 
 let pool = [];       // notas activas en el nivel actual
 let remaining = [];  // notas por incorporar en próximos niveles
@@ -157,16 +221,16 @@ let wrongNote = null, wrongNoteSince = 0, lastWrongAt = 0;
 document.getElementById('startBtn').onclick = async () => {
   const err = document.getElementById('err');
   err.style.display = 'none';
-  if (selected.size === 0) { err.textContent = 'Elegí al menos una nota para arrancar.'; err.style.display='block'; return; }
+  if (selected.size === 0) { err.textContent = t().errNoNotes; err.style.display='block'; return; }
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    err.textContent = 'Este archivo abierto así no puede usar el micrófono (el navegador solo lo permite en páginas HTTPS). Subilo a un hosting o usá la versión publicada en claude.ai.';
+    err.textContent = t().errInsecure;
     err.style.display = 'block';
     return;
   }
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
   } catch(e) {
-    err.textContent = 'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.';
+    err.textContent = t().errNoMic;
     err.style.display = 'block';
     return;
   }
@@ -198,7 +262,7 @@ function updateTopbar(){
 
 function renderProgress(){
   const row = document.getElementById('progressRow');
-  let dotsHtml = '<span class="plabel">10 SEGUIDAS SIN FALLAR</span>';
+  let dotsHtml = `<span class="plabel" id="plabel">${t().progressLabel}</span>`;
   for (let i=0;i<10;i++){
     dotsHtml += `<span class="pdot${i<streakToNext?' on':''}"></span>`;
   }
@@ -213,10 +277,10 @@ function pulseReset(){
 
 function showLevelUp(lvl, addedNote){
   const el = document.getElementById('levelUp');
-  document.getElementById('lvNum').textContent = 'NIVEL ' + lvl;
+  document.getElementById('lvNum').textContent = t().levelWord + ' ' + lvl;
   document.getElementById('lvSub').textContent = addedNote
-    ? ('Nota agregada: ' + NOTE_ES[addedNote])
-    : 'Ya tenés todas las notas activas';
+    ? (t().addedNote + noteLabel(addedNote))
+    : t().allNotesActive;
   el.classList.add('show');
   setTimeout(()=> el.classList.remove('show'), 1600);
 }
@@ -250,8 +314,8 @@ function renderStrings(selectedCuerda){
 function nextRound(){
   currentCuerda = 1 + Math.floor(Math.random()*6);
   currentNota = pool[Math.floor(Math.random()*pool.length)];
-  document.getElementById('cuerdaLbl').textContent = 'CUERDA ' + currentCuerda;
-  document.getElementById('notaLbl').textContent = NOTE_ES[currentNota];
+  document.getElementById('cuerdaLbl').textContent = t().cuerdaWord + ' ' + currentCuerda;
+  document.getElementById('notaLbl').textContent = noteLabel(currentNota);
   document.getElementById('freqHint').textContent = '';
   renderStrings(currentCuerda);
   renderProgress();
@@ -271,7 +335,7 @@ function tick(){
   if (timeLeft <= 0){
     clearInterval(timerId);
     roundActive = false;
-    flash('bad','¡Se pasó el tiempo!');
+    flash('bad', t().flashTimeUp);
     setTimeout(()=>{
       if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
       updateTopbar();
@@ -303,13 +367,17 @@ function onCorrect(){
   clearInterval(timerId);
   score++;
   streakToNext++;
-  flash('ok', '¡Bien!');
+  flash('ok', t().flashGood);
   renderProgress();
   if (streakToNext >= 10){
     streakToNext = 0;
     level++;
     let added = null;
-    if (remaining.length){ added = remaining.shift(); pool.push(added); }
+    if (remaining.length){
+      const idx = Math.floor(Math.random() * remaining.length);
+      added = remaining.splice(idx, 1)[0];
+      pool.push(added);
+    }
     updateTopbar();
     renderProgress();
     showLevelUp(level, added);
@@ -368,7 +436,7 @@ function loop(){
     if (!roundActive) return;
     const range = STRING_RANGE[currentCuerda];
     const noteName = freqToNote(freq);
-    document.getElementById('freqHint').textContent = Math.round(freq)+' Hz · '+NOTE_ES[noteName];
+    document.getElementById('freqHint').textContent = Math.round(freq)+' Hz · '+noteLabel(noteName);
     const inRange = freq >= range[0]*0.94 && freq <= range[1]*1.06;
     if (noteName === currentNota && inRange){
       onCorrect();
@@ -381,7 +449,7 @@ function loop(){
         if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
         renderProgress();
         updateTopbar();
-        flash('bad', NOTE_ES[noteName] + ' no es');
+        flash('bad', noteLabel(noteName) + t().wrongSuffix);
       }
     }
   } else {
