@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Notas de Guitarra</title>
+<title>Guitar Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -22,11 +22,11 @@ body{
   font-family:'Inter',sans-serif;display:flex;flex-direction:column;
   overflow-x:hidden;
 }
-.wrap{max-width:480px;margin:0 auto;width:100%;padding:20px 18px;flex:1;display:flex;flex-direction:column;min-height:100%}
+.wrap{max-width:480px;margin:0 auto;width:100%;padding:20px 18px 46px;flex:1;display:flex;flex-direction:column;min-height:100%}
 h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:6px 0 2px;letter-spacing:.3px}
 .sub{color:var(--dim);font-size:14px;margin:0 0 20px;line-height:1.4}
 .card{background:var(--card);border:1px solid #40301f;border-radius:14px;padding:18px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 10px}
 .chip{padding:9px 14px;border-radius:999px;border:1px solid #52402a;background:#332415;color:var(--dim);
   font-size:15px;font-weight:600;cursor:pointer;user-select:none;transition:.15s}
 .chip.on{background:var(--string);border-color:var(--string);color:#211406}
@@ -38,10 +38,16 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
   color:var(--dim);font-size:14px;margin-top:10px;cursor:pointer}
 #setup,#game,#done{display:none}
 #setup.show,#game.show,#done.show{display:flex;flex-direction:column;flex:1}
-.topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim);margin-bottom:14px}
+.topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--dim);margin-bottom:10px;gap:8px}
 .topbar b{color:var(--cream);font-weight:600}
+.progressRow{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px}
+.progressRow .plabel{font-size:11px;color:var(--dim);margin-right:6px;letter-spacing:.3px}
+.pdot{width:14px;height:14px;border-radius:50%;background:#332415;border:1.5px solid #52402a;transition:.2s}
+.pdot.on{background:var(--ok);border-color:var(--ok)}
+.progressRow.reset .pdot{background:var(--bad)!important;border-color:var(--bad)!important}
 .stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;position:relative}
-.cuerda{font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:2px;color:var(--string);font-weight:600;text-transform:uppercase}
+.cuerda{font-family:'Oswald',sans-serif;font-size:34px;letter-spacing:1px;color:var(--string);font-weight:700;text-transform:uppercase}
+.strings{width:100%;max-width:260px;margin:2px 0 10px}
 .nota{font-family:'Oswald',sans-serif;font-size:110px;font-weight:700;line-height:1;margin:4px 0}
 .hint{font-size:13px;color:var(--dim)}
 .timebar{height:10px;border-radius:6px;background:#332415;overflow:hidden;margin:22px 0 6px}
@@ -59,47 +65,82 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 #done h2{font-family:'Oswald',sans-serif;font-size:30px;margin-bottom:4px}
 #done p{color:var(--dim);font-size:14px}
 #err{color:var(--bad);font-size:13px;margin-top:10px;display:none}
+
+.levelUp{position:fixed;inset:0;background:rgba(27,20,16,.94);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;z-index:50;opacity:0;pointer-events:none;transition:opacity .25s}
+.levelUp.show{opacity:1}
+.levelUp .lvNum{font-family:'Oswald',sans-serif;font-size:52px;font-weight:700;color:var(--string);
+  transform:scale(.4);opacity:0;transition:transform .45s cubic-bezier(.2,1.6,.4,1),opacity .3s}
+.levelUp.show .lvNum{transform:scale(1);opacity:1}
+.levelUp .lvSub{font-size:16px;color:var(--cream);opacity:0;transform:translateY(10px);transition:opacity .4s .15s,transform .4s .15s}
+.levelUp.show .lvSub{opacity:1;transform:translateY(0)}
+.langToggle{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:60;
+  background:var(--card);border:1px solid #52402a;border-radius:999px;width:42px;height:42px;
+  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+
+.igBanner{position:fixed;left:0;right:0;bottom:0;z-index:40;text-align:center;
+  padding:6px 14px calc(6px + env(safe-area-inset-bottom,0px));
+  background:rgba(27,20,16,.88);border-top:1px solid #40301f;
+  font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.2px}
+.igBanner b{color:var(--string);font-weight:600}
+
+#visitBadge{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:60;
+  background:var(--card);border:1px solid #52402a;border-radius:999px;padding:6px 12px;
+  font-size:12px;color:var(--dim)}
 </style>
 </head>
 <body>
+<button class="langToggle" id="flagBtn" title="Switch language">🇪🇸</button>
 <div class="wrap">
 
   <div id="setup" class="show">
-    <h1>Notas de guitarra</h1>
-    <p class="sub">Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos subís de nivel y sumo una nota nueva.</p>
+    <h1 id="appTitle">Guitar Notes</h1>
+    <p class="sub" id="appSub"></p>
     <div class="card">
-      <label class="field">Empezar el nivel 1 con estas notas:</label>
+      <label class="field" id="chooseLabel"></label>
       <div class="chips" id="chips"></div>
-      <button class="main" id="startBtn">Empezar</button>
+      <button class="ghost" id="randomBtn" type="button"></button>
+      <button class="main" id="startBtn"></button>
       <div id="err"></div>
     </div>
   </div>
 
   <div id="game">
     <div class="topbar">
-      <span>Nivel <b id="lvl">1</b></span>
-      <span><b id="streak">0</b>/10 para subir</span>
-      <span>Aciertos: <b id="score">0</b></span>
+      <span><span id="lblLevel">Level</span> <b id="lvl">1</b></span>
+      <span><span id="lblPool">Notes in play</span>: <b id="poolCount">1</b></span>
+      <span><span id="lblScore">Correct</span>: <b id="score">0</b></span>
+    </div>
+    <div class="progressRow" id="progressRow">
+      <span class="plabel" id="plabel">10 IN A ROW, NO MISSES</span>
     </div>
     <div class="stage">
       <div class="flash" id="flash"></div>
-      <div class="cuerda" id="cuerdaLbl">CUERDA 1</div>
+      <svg class="strings" id="stringsSvg" viewBox="0 0 260 90" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="cuerda" id="cuerdaLbl">STRING 1</div>
       <div class="nota" id="notaLbl">C</div>
       <div class="hint" id="freqHint">&nbsp;</div>
     </div>
     <div class="timebar"><div id="timeFill"></div></div>
-    <div class="mic"><span class="dot" id="dot"></span><span id="micTxt">Escuchando…</span></div>
+    <div class="mic"><span class="dot" id="dot"></span><span id="micTxt">Listening…</span></div>
+  </div>
+
+  <div class="levelUp" id="levelUp">
+    <div class="lvNum" id="lvNum">LEVEL 2</div>
+    <div class="lvSub" id="lvSub">Note added: D</div>
   </div>
 
   <div id="done">
     <div class="stage">
-      <h2>¡Se acabó el tiempo!</h2>
-      <p>Llegaste al nivel <b id="finalLvl"></b> con <b id="finalScore"></b> aciertos.</p>
-      <button class="main" id="retryBtn">Jugar de nuevo</button>
+      <h2 id="doneTitle">Time's up!</h2>
+      <p id="doneP"></p>
+      <button class="main" id="retryBtn"></button>
     </div>
   </div>
 
 </div>
+
+<a class="igBanner" id="igBanner" href="https://instagram.com/slowtronics" target="_blank" rel="noopener"></a>
 
 <script>
 const ALL_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -110,16 +151,89 @@ const STRING_RANGE = {
   4:[146.83,293.66], 5:[110.00,220.00], 6:[82.41,164.81]
 };
 
+let lang = 'en';
+const STR = {
+  es: {
+    title:'Notas de guitarra',
+    subtitle:'Te voy a pedir una cuerda y una nota. Tocala y escucho por el micrófono si le pegaste. Cada 10 aciertos seguidos subís de nivel y sumo una nota nueva.',
+    chooseLabel:'Empezar el nivel 1 con estas notas:',
+    randomBtn:'O elegí una nota al azar por mí 🎲',
+    startBtn:'Empezar', retryBtn:'Jugar de nuevo',
+    errNoNotes:'Elegí al menos una nota para arrancar.',
+    errInsecure:'Este archivo abierto así no puede usar el micrófono (el navegador solo lo permite en páginas HTTPS). Subilo a un hosting o usá la versión publicada en claude.ai.',
+    errNoMic:'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.',
+    lblLevel:'Nivel', lblPool:'Notas en juego', lblScore:'Aciertos',
+    progressLabel:'10 SEGUIDAS SIN FALLAR', cuerdaWord:'CUERDA', micListening:'Escuchando…',
+    flashGood:'¡Bien!', flashTimeUp:'¡Se pasó el tiempo!', wrongSuffix:' no es',
+    levelWord:'NIVEL', addedNote:'Nota agregada: ', allNotesActive:'Ya tenés todas las notas activas',
+    doneTitle:'¡Se acabó el tiempo!', doneText:(l,s)=>`Llegaste al nivel ${l} con ${s} aciertos.`,
+    igBanner:'Más proyectos / More projects → <b>@slowtronics</b> en Instagram'
+  },
+  en: {
+    title:'Guitar Notes',
+    subtitle:"I'll call out a string and a note. Play it and I'll listen through the mic. Get 10 correct in a row to level up and I'll add a new note.",
+    chooseLabel:'Start level 1 with these notes:',
+    randomBtn:'Or pick a random note for me 🎲',
+    startBtn:'Start', retryBtn:'Play again',
+    errNoNotes:'Pick at least one note to start.',
+    errInsecure:"A file opened this way can't use the microphone (browsers only allow it on HTTPS pages). Upload it somewhere, or use the published claude.ai version.",
+    errNoMic:'I need microphone access to listen to you. Check your browser permissions.',
+    lblLevel:'Level', lblPool:'Notes in play', lblScore:'Correct',
+    progressLabel:'10 IN A ROW, NO MISSES', cuerdaWord:'STRING', micListening:'Listening…',
+    flashGood:'Nice!', flashTimeUp:"Time's up!", wrongSuffix:" isn't it",
+    levelWord:'LEVEL', addedNote:'Note added: ', allNotesActive:'All notes are already active',
+    doneTitle:"Time's up!", doneText:(l,s)=>`You reached level ${l} with ${s} correct notes.`,
+    igBanner:'More projects / Más proyectos → <b>@slowtronics</b> on Instagram'
+  }
+};
+function t(){ return STR[lang]; }
+function noteLabel(n){ return lang==='es' ? NOTE_ES[n] : n; }
+
 // ---- Setup screen ----
 const chipsEl = document.getElementById('chips');
 let selected = new Set(['C']);
-ALL_NOTES.forEach(n=>{
-  const c = document.createElement('div');
-  c.className = 'chip' + (selected.has(n)?' on':'');
-  c.textContent = NOTE_ES[n];
-  c.onclick = ()=>{ selected.has(n) ? selected.delete(n) : selected.add(n); c.classList.toggle('on'); };
-  chipsEl.appendChild(c);
-});
+function renderChips(){
+  chipsEl.innerHTML = '';
+  ALL_NOTES.forEach(n=>{
+    const c = document.createElement('div');
+    c.className = 'chip' + (selected.has(n)?' on':'');
+    c.textContent = noteLabel(n);
+    c.onclick = ()=>{ selected.has(n) ? selected.delete(n) : selected.add(n); c.classList.toggle('on'); };
+    chipsEl.appendChild(c);
+  });
+}
+renderChips();
+
+function applyLanguage(){
+  const s = t();
+  document.documentElement.lang = lang;
+  document.getElementById('appTitle').textContent = s.title;
+  document.getElementById('appSub').textContent = s.subtitle;
+  document.getElementById('chooseLabel').textContent = s.chooseLabel;
+  document.getElementById('randomBtn').textContent = s.randomBtn;
+  document.getElementById('startBtn').textContent = s.startBtn;
+  document.getElementById('retryBtn').textContent = s.retryBtn;
+  document.getElementById('lblLevel').textContent = s.lblLevel;
+  document.getElementById('lblPool').textContent = s.lblPool;
+  document.getElementById('lblScore').textContent = s.lblScore;
+  document.getElementById('plabel').textContent = s.progressLabel;
+  document.getElementById('micTxt').textContent = s.micListening;
+  document.getElementById('doneTitle').textContent = s.doneTitle;
+  document.getElementById('igBanner').innerHTML = s.igBanner;
+  document.getElementById('flagBtn').textContent = lang==='es' ? '🇬🇧' : '🇪🇸';
+  renderChips();
+  if (document.getElementById('game').classList.contains('show')){
+    document.getElementById('cuerdaLbl').textContent = s.cuerdaWord + ' ' + currentCuerda;
+    document.getElementById('notaLbl').textContent = noteLabel(currentNota);
+  }
+}
+document.getElementById('flagBtn').onclick = ()=>{ lang = lang==='es' ? 'en' : 'es'; applyLanguage(); };
+document.getElementById('randomBtn').onclick = ()=>{
+  selected.clear();
+  selected.add(ALL_NOTES[Math.floor(Math.random()*ALL_NOTES.length)]);
+  renderChips();
+};
+applyLanguage();
 
 let pool = [];       // notas activas en el nivel actual
 let remaining = [];  // notas por incorporar en próximos niveles
@@ -128,15 +242,21 @@ let audioCtx, analyser, micStream, rafId;
 let roundActive = false, timeLeft = 0, timeLimit = 30, timerId = null;
 let currentCuerda = 1, currentNota = 'C';
 let lastMatchAt = 0;
+let wrongNote = null, wrongNoteSince = 0, lastWrongAt = 0;
 
 document.getElementById('startBtn').onclick = async () => {
   const err = document.getElementById('err');
   err.style.display = 'none';
-  if (selected.size === 0) { err.textContent = 'Elegí al menos una nota para arrancar.'; err.style.display='block'; return; }
+  if (selected.size === 0) { err.textContent = t().errNoNotes; err.style.display='block'; return; }
+  if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    err.textContent = t().errInsecure;
+    err.style.display = 'block';
+    return;
+  }
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation:false, noiseSuppression:false, autoGainControl:false } });
   } catch(e) {
-    err.textContent = 'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.';
+    err.textContent = t().errNoMic;
     err.style.display = 'block';
     return;
   }
@@ -150,6 +270,7 @@ document.getElementById('startBtn').onclick = async () => {
   src.connect(analyser);
   document.getElementById('setup').classList.remove('show');
   document.getElementById('game').classList.add('show');
+  document.getElementById('flagBtn').style.display = 'none';
   updateTopbar();
   nextRound();
   loop();
@@ -158,28 +279,79 @@ document.getElementById('startBtn').onclick = async () => {
 document.getElementById('retryBtn').onclick = ()=>{
   document.getElementById('done').classList.remove('show');
   document.getElementById('setup').classList.add('show');
+  document.getElementById('flagBtn').style.display = 'flex';
 };
 
 function updateTopbar(){
   document.getElementById('lvl').textContent = level;
   document.getElementById('score').textContent = score;
-  document.getElementById('streak').textContent = streakToNext;
+  document.getElementById('poolCount').textContent = pool.length;
+}
+
+function renderProgress(){
+  const row = document.getElementById('progressRow');
+  let dotsHtml = `<span class="plabel" id="plabel">${t().progressLabel}</span>`;
+  for (let i=0;i<10;i++){
+    dotsHtml += `<span class="pdot${i<streakToNext?' on':''}"></span>`;
+  }
+  row.innerHTML = dotsHtml;
+}
+
+function pulseReset(){
+  const row = document.getElementById('progressRow');
+  row.classList.add('reset');
+  setTimeout(()=> row.classList.remove('reset'), 260);
+}
+
+function showLevelUp(lvl, addedNote){
+  const el = document.getElementById('levelUp');
+  document.getElementById('lvNum').textContent = t().levelWord + ' ' + lvl;
+  document.getElementById('lvSub').textContent = addedNote
+    ? (t().addedNote + noteLabel(addedNote))
+    : t().allNotesActive;
+  el.classList.add('show');
+  setTimeout(()=> el.classList.remove('show'), 1600);
 }
 
 function timeLimitForLevel(l){
   return Math.max(8, 30 - (l-1)*2);
 }
 
+const STRING_WIDTH = {6:5.2, 5:4.4, 4:3.6, 3:2.6, 2:1.8, 1:1.3};
+function renderStrings(selectedCuerda){
+  const svg = document.getElementById('stringsSvg');
+  const order = [6,5,4,3,2,1]; // izquierda (grave/gruesa) a derecha (aguda/fina)
+  const n = order.length;
+  const pad = 24;
+  const step = (260 - pad*2) / (n-1);
+  let html = '';
+  order.forEach((s, i)=>{
+    const x = pad + i*step;
+    const isSel = s === selectedCuerda;
+    const w = STRING_WIDTH[s];
+    const color = isSel ? 'var(--string)' : '#5a4530';
+    html += `<line x1="${x}" y1="10" x2="${x}" y2="66" stroke="${color}" stroke-width="${w}" stroke-linecap="round"${isSel?' filter="url(#glow)"':''}/>`;
+    html += `<circle cx="${x}" cy="80" r="${isSel?11:9}" fill="${isSel?'var(--string)':'#332415'}" stroke="${isSel?'none':'#5a4530'}"/>`;
+    html += `<text x="${x}" y="84" text-anchor="middle" font-family="Oswald,sans-serif" font-size="13" font-weight="700" fill="${isSel?'#211406':'#b8a890'}">${s}</text>`;
+  });
+  svg.innerHTML = `<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter></defs>` + html;
+}
+
 function nextRound(){
   currentCuerda = 1 + Math.floor(Math.random()*6);
   currentNota = pool[Math.floor(Math.random()*pool.length)];
-  document.getElementById('cuerdaLbl').textContent = 'CUERDA ' + currentCuerda;
-  document.getElementById('notaLbl').textContent = NOTE_ES[currentNota];
+  document.getElementById('cuerdaLbl').textContent = t().cuerdaWord + ' ' + currentCuerda;
+  document.getElementById('notaLbl').textContent = noteLabel(currentNota);
   document.getElementById('freqHint').textContent = '';
+  renderStrings(currentCuerda);
+  renderProgress();
   timeLimit = timeLimitForLevel(level);
   timeLeft = timeLimit;
   roundActive = true;
   lastMatchAt = 0;
+  wrongNote = null; wrongNoteSince = 0;
   clearInterval(timerId);
   timerId = setInterval(tick, 100);
   renderBar();
@@ -191,9 +363,9 @@ function tick(){
   if (timeLeft <= 0){
     clearInterval(timerId);
     roundActive = false;
-    flash('bad','¡Se pasó el tiempo!');
+    flash('bad', t().flashTimeUp);
     setTimeout(()=>{
-      if (streakToNext > 0) streakToNext = Math.max(0, streakToNext-1);
+      if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
       updateTopbar();
       nextRound();
     }, 700);
@@ -223,16 +395,25 @@ function onCorrect(){
   clearInterval(timerId);
   score++;
   streakToNext++;
-  flash('ok', '¡Bien!');
+  flash('ok', t().flashGood);
+  renderProgress();
   if (streakToNext >= 10){
     streakToNext = 0;
     level++;
+    let added = null;
     if (remaining.length){
-      pool.push(remaining.shift());
+      const idx = Math.floor(Math.random() * remaining.length);
+      added = remaining.splice(idx, 1)[0];
+      pool.push(added);
     }
+    updateTopbar();
+    renderProgress();
+    showLevelUp(level, added);
+    setTimeout(nextRound, 1700);
+  } else {
+    updateTopbar();
+    setTimeout(nextRound, 550);
   }
-  updateTopbar();
-  setTimeout(nextRound, 550);
 }
 
 // ---- Detección de pitch (autocorrelación) ----
@@ -283,15 +464,49 @@ function loop(){
     if (!roundActive) return;
     const range = STRING_RANGE[currentCuerda];
     const noteName = freqToNote(freq);
-    document.getElementById('freqHint').textContent = Math.round(freq)+' Hz · '+NOTE_ES[noteName];
+    document.getElementById('freqHint').textContent = Math.round(freq)+' Hz · '+noteLabel(noteName);
     const inRange = freq >= range[0]*0.94 && freq <= range[1]*1.06;
     if (noteName === currentNota && inRange){
       onCorrect();
+    } else {
+      const now = performance.now();
+      if (noteName !== wrongNote){ wrongNote = noteName; wrongNoteSince = now; }
+      else if (now - wrongNoteSince > 150 && now - lastWrongAt > 900){
+        lastWrongAt = now;
+        score = Math.max(0, score - 1);
+        if (streakToNext > 0){ streakToNext = 0; pulseReset(); }
+        renderProgress();
+        updateTopbar();
+        flash('bad', noteLabel(noteName) + t().wrongSuffix);
+      }
     }
   } else {
     dot.classList.remove('live');
   }
 }
+
+// ---- Visit counter (owner-only badge, no external services) ----
+(async function trackVisit(){
+  try{
+    const db = await claude.use('db');
+    if(!db) return;
+    const ref = db.doc('stats/visits');
+    let count = 0;
+    try{
+      const snap = await ref.get();
+      if (snap && snap.data && typeof snap.data.count === 'number') count = snap.data.count;
+    } catch(e){ /* doc may not exist yet */ }
+    count += 1;
+    await ref.set({ count, last: Date.now() });
+    const user = await claude.use('user');
+    if (user && typeof user.isOwner === 'function' && user.isOwner()){
+      const badge = document.createElement('div');
+      badge.id = 'visitBadge';
+      badge.textContent = '👁 ' + count;
+      document.body.appendChild(badge);
+    }
+  } catch(e){ /* silent: counter is a nice-to-have, never break the app */ }
+})();
 </script>
 </body>
 </html>
