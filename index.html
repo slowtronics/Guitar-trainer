@@ -22,7 +22,7 @@ body{
   font-family:'Inter',sans-serif;display:flex;flex-direction:column;
   overflow-x:hidden;
 }
-.wrap{max-width:480px;margin:0 auto;width:100%;padding:20px 18px 46px;flex:1;display:flex;flex-direction:column;min-height:100%}
+.wrap{max-width:480px;margin:0 auto;width:100%;padding:20px 18px 74px;flex:1;display:flex;flex-direction:column;min-height:100%}
 h1{font-family:'Oswald',sans-serif;font-size:26px;font-weight:700;margin:6px 0 2px;letter-spacing:.3px}
 .sub{color:var(--dim);font-size:14px;margin:0 0 20px;line-height:1.4}
 .card{background:var(--card);border:1px solid #40301f;border-radius:14px;padding:18px}
@@ -78,10 +78,14 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
   background:var(--card);border:1px solid #52402a;border-radius:999px;width:42px;height:42px;
   font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 
-.igBanner{position:fixed;left:0;right:0;bottom:0;z-index:40;text-align:center;
-  padding:6px 14px calc(6px + env(safe-area-inset-bottom,0px));
-  background:rgba(27,20,16,.88);border-top:1px solid #40301f;
-  font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.2px}
+.footer{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:rgba(27,20,16,.92);border-top:1px solid #40301f}
+.sensRow{display:flex;align-items:center;gap:10px;padding:8px 16px 2px;font-size:11px;color:var(--dim);letter-spacing:.2px}
+.sensRow input[type=range]{flex:1;accent-color:var(--string);height:4px;cursor:pointer}
+.sensRow span:first-child{white-space:nowrap}
+.igBanner{display:block;text-align:center;text-decoration:none;
+  padding:3px 14px calc(6px + env(safe-area-inset-bottom,0px));
+  font-size:11px;color:var(--dim);letter-spacing:.2px}
 .igBanner b{color:var(--string);font-weight:600}
 
 #visitBadge{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:14px;z-index:60;
@@ -100,6 +104,8 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
       <label class="field" id="chooseLabel"></label>
       <div class="chips" id="chips"></div>
       <button class="ghost" id="randomBtn" type="button"></button>
+      <label class="field" id="stringsLabel" style="margin-top:16px"></label>
+      <div class="chips" id="stringChips"></div>
       <button class="main" id="startBtn"></button>
       <div id="err"></div>
     </div>
@@ -140,7 +146,13 @@ button.ghost{width:100%;padding:12px;border-radius:12px;border:1px solid #52402a
 
 </div>
 
-<a class="igBanner" id="igBanner" href="https://instagram.com/slowtronics" target="_blank" rel="noopener"></a>
+<div class="footer">
+  <div class="sensRow">
+    <span id="sensLabel"></span>
+    <input type="range" id="sensSlider" min="1" max="10" value="5" step="1">
+  </div>
+  <a class="igBanner" id="igBanner" href="https://instagram.com/slowtronics" target="_blank" rel="noopener"></a>
+</div>
 
 <script>
 const ALL_NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
@@ -162,12 +174,15 @@ const STR = {
     errNoNotes:'Elegí al menos una nota para arrancar.',
     errInsecure:'Este archivo abierto así no puede usar el micrófono (el navegador solo lo permite en páginas HTTPS). Subilo a un hosting o usá la versión publicada en claude.ai.',
     errNoMic:'Necesito acceso al micrófono para escucharte. Revisá los permisos del navegador.',
+    stringsLabel:'Cuerdas a practicar (tocá para activar/desactivar):',
+    errNoStrings:'Activá al menos una cuerda.',
+    sensLabel:'Sensibilidad del micrófono',
     lblLevel:'Nivel', lblPool:'Notas en juego', lblScore:'Aciertos',
     progressLabel:'10 SEGUIDAS SIN FALLAR', cuerdaWord:'CUERDA', micListening:'Escuchando…',
     flashGood:'¡Bien!', flashTimeUp:'¡Se pasó el tiempo!', wrongSuffix:' no es',
     levelWord:'NIVEL', addedNote:'Nota agregada: ', allNotesActive:'Ya tenés todas las notas activas',
     doneTitle:'¡Se acabó el tiempo!', doneText:(l,s)=>`Llegaste al nivel ${l} con ${s} aciertos.`,
-    igBanner:'Más proyectos / More projects → <b>@slowtronics</b> en Instagram'
+    igBanner:'Más proyectos → <b>@slowtronics</b> en Instagram'
   },
   en: {
     title:'Guitar Notes',
@@ -178,12 +193,15 @@ const STR = {
     errNoNotes:'Pick at least one note to start.',
     errInsecure:"A file opened this way can't use the microphone (browsers only allow it on HTTPS pages). Upload it somewhere, or use the published claude.ai version.",
     errNoMic:'I need microphone access to listen to you. Check your browser permissions.',
+    stringsLabel:'Strings to practice (tap to enable/disable):',
+    errNoStrings:'Enable at least one string.',
+    sensLabel:'Mic sensitivity',
     lblLevel:'Level', lblPool:'Notes in play', lblScore:'Correct',
     progressLabel:'10 IN A ROW, NO MISSES', cuerdaWord:'STRING', micListening:'Listening…',
     flashGood:'Nice!', flashTimeUp:"Time's up!", wrongSuffix:" isn't it",
     levelWord:'LEVEL', addedNote:'Note added: ', allNotesActive:'All notes are already active',
     doneTitle:"Time's up!", doneText:(l,s)=>`You reached level ${l} with ${s} correct notes.`,
-    igBanner:'More projects / Más proyectos → <b>@slowtronics</b> on Instagram'
+    igBanner:'More projects → <b>@slowtronics</b> on Instagram'
   }
 };
 function t(){ return STR[lang]; }
@@ -204,6 +222,20 @@ function renderChips(){
 }
 renderChips();
 
+let stringsEnabled = new Set([1,2,3,4,5,6]);
+const stringChipsEl = document.getElementById('stringChips');
+function renderStringChips(){
+  stringChipsEl.innerHTML = '';
+  for (let s=6; s>=1; s--){
+    const c = document.createElement('div');
+    c.className = 'chip' + (stringsEnabled.has(s)?' on':'');
+    c.textContent = s;
+    c.onclick = ()=>{ stringsEnabled.has(s) ? stringsEnabled.delete(s) : stringsEnabled.add(s); c.classList.toggle('on'); };
+    stringChipsEl.appendChild(c);
+  }
+}
+renderStringChips();
+
 function applyLanguage(){
   const s = t();
   document.documentElement.lang = lang;
@@ -211,6 +243,8 @@ function applyLanguage(){
   document.getElementById('appSub').textContent = s.subtitle;
   document.getElementById('chooseLabel').textContent = s.chooseLabel;
   document.getElementById('randomBtn').textContent = s.randomBtn;
+  document.getElementById('stringsLabel').textContent = s.stringsLabel;
+  document.getElementById('sensLabel').textContent = s.sensLabel;
   document.getElementById('startBtn').textContent = s.startBtn;
   document.getElementById('retryBtn').textContent = s.retryBtn;
   document.getElementById('lblLevel').textContent = s.lblLevel;
@@ -244,10 +278,18 @@ let currentCuerda = 1, currentNota = 'C';
 let lastMatchAt = 0;
 let wrongNote = null, wrongNoteSince = 0, lastWrongAt = 0;
 
+// Mic sensitivity: slider 1 (needs a loud, clean pluck) .. 10 (picks up even quiet notes)
+let micThreshold = 0.012;
+document.getElementById('sensSlider').oninput = (e)=>{
+  const v = parseInt(e.target.value, 10);
+  micThreshold = 0.002 * (11 - v);
+};
+
 document.getElementById('startBtn').onclick = async () => {
   const err = document.getElementById('err');
   err.style.display = 'none';
   if (selected.size === 0) { err.textContent = t().errNoNotes; err.style.display='block'; return; }
+  if (stringsEnabled.size === 0) { err.textContent = t().errNoStrings; err.style.display='block'; return; }
   if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     err.textContent = t().errInsecure;
     err.style.display = 'block';
@@ -340,7 +382,8 @@ function renderStrings(selectedCuerda){
 }
 
 function nextRound(){
-  currentCuerda = 1 + Math.floor(Math.random()*6);
+  const avail = Array.from(stringsEnabled);
+  currentCuerda = avail[Math.floor(Math.random()*avail.length)];
   currentNota = pool[Math.floor(Math.random()*pool.length)];
   document.getElementById('cuerdaLbl').textContent = t().cuerdaWord + ' ' + currentCuerda;
   document.getElementById('notaLbl').textContent = noteLabel(currentNota);
@@ -417,12 +460,12 @@ function onCorrect(){
 }
 
 // ---- Detección de pitch (autocorrelación) ----
-function autoCorrelate(buf, sampleRate){
+function autoCorrelate(buf, sampleRate, threshold){
   const SIZE = buf.length;
   let rms = 0;
   for (let i=0;i<SIZE;i++){ rms += buf[i]*buf[i]; }
   rms = Math.sqrt(rms/SIZE);
-  if (rms < 0.01) return -1;
+  if (rms < threshold) return -1;
 
   let r1=0, r2=SIZE-1, thresh=0.2;
   for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i])<thresh){ r1=i; break; } }
@@ -457,7 +500,7 @@ function loop(){
   rafId = requestAnimationFrame(loop);
   if (!analyser) return;
   analyser.getFloatTimeDomainData(buf);
-  const freq = autoCorrelate(buf, audioCtx.sampleRate);
+  const freq = autoCorrelate(buf, audioCtx.sampleRate, micThreshold);
   const dot = document.getElementById('dot');
   if (freq > 0){
     dot.classList.add('live');
